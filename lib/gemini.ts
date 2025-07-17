@@ -14,7 +14,7 @@ function stripMarkdown(text: string): string {
 
 export async function getGeminiResponse(prompt: string): Promise<string> {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
         const result = await model.generateContent(
             `Respond in plain text only without any markdown formatting. Do not use asterisks, backticks, or any special formatting.\n\n${prompt}`

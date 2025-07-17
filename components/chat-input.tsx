@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Form,
   FormField,
@@ -7,10 +8,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import type React from "react";
-
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ArrowUp } from "lucide-react"; // Changed from SendHorizonal
+import { ArrowUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -60,7 +60,6 @@ export function ChatInput({
     const prompt = data.prompt.trim();
     if (!prompt) return;
 
-    // Reset form immediately for UX
     form.reset();
     setInput("");
     startTransition(() => {
@@ -69,12 +68,12 @@ export function ChatInput({
   };
 
   return (
-    <div className="p-4 bg-card rounded-2xl shadow-lg">
+    <div className="w-full p-4">
       <Form {...form}>
         <form
           ref={formRef}
           onSubmit={form.handleSubmit(onSubmit)}
-          className="relative w-full max-w-3xl mx-auto"
+          className="w-full max-w-4xl mx-auto"
         >
           <div className="relative">
             <FormField
@@ -87,7 +86,7 @@ export function ChatInput({
                       {...field}
                       ref={textareaRef}
                       placeholder="Send a message..."
-                      className="w-full min-h-[100px] max-h-[200px] resize-none text-base py-3 pl-4 pr-14 rounded-xl border bg-background focus-visible:ring-1 focus-visible:ring-ring shadow-sm"
+                      className="w-full min-h-[120px] max-h-[200px] resize-none py-4 pl-4 pr-12 rounded-xl border shadow-sm"
                       rows={1}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
@@ -109,9 +108,9 @@ export function ChatInput({
               type="submit"
               size="icon"
               disabled={isPending || !form.watch("prompt").trim()}
-              className="absolute right-2 bottom-[5px] h-10 w-10 rounded-lg hover:bg-primary/90 transition-colors cursor-pointer" // Adjusted bottom position
+              className="absolute right-2 bottom-2 h-9 w-9 rounded-lg"
             >
-              <ArrowUp className="h-5 w-5" /> {/* Changed icon */}
+              <ArrowUp className="h-4 w-4" />
             </Button>
           </div>
         </form>

@@ -1,15 +1,20 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useEffect,
+} from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Loader2, User } from "lucide-react";
-import { useChatMessages } from "@/hooks/use-chat-message";
+import { User } from "lucide-react";
 
-interface Message {
+export interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "model";
   content: string;
+  createdAt: string;
 }
 
 export interface ChatMessagesRef {
@@ -17,14 +22,16 @@ export interface ChatMessagesRef {
 }
 
 interface ChatMessagesProps {
+  chatId: string;
   isThinking: boolean;
+  messages: Message[];
 }
 
 export const ChatMessages = forwardRef<ChatMessagesRef, ChatMessagesProps>(
-  ({ isThinking }, ref) => {
-    const { data: messages = [] } = useChatMessages();
+  ({ chatId, isThinking, messages }, ref) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // This hook allows the parent to call scrollToBottom()
     useImperativeHandle(ref, () => ({
       scrollToBottom: () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,15 +44,15 @@ export const ChatMessages = forwardRef<ChatMessagesRef, ChatMessagesProps>(
 
     return (
       <div className="space-y-4 px-4">
-        {messages.map((m: Message) => (
+        {messages.map((message) => (
           <div
-            key={m.id}
+            key={message.id}
             className={cn(
               "flex items-start gap-2",
-              m.role === "user" ? "justify-end" : "justify-start"
+              message.role === "user" ? "justify-end" : "justify-start"
             )}
           >
-            {m.role === "user" && (
+            {message.role === "user" && (
               <div className="mt-1 text-muted-foreground">
                 <User className="h-5 w-5" />
               </div>
@@ -53,13 +60,13 @@ export const ChatMessages = forwardRef<ChatMessagesRef, ChatMessagesProps>(
             <Card
               className={cn(
                 "max-w-[70%] rounded-xl",
-                m.role === "user"
+                message.role === "user"
                   ? "bg-[#171717] text-foreground border px-3 py-2 text-sm"
                   : "bg-muted/50 text-muted-foreground border px-4 py-3"
               )}
             >
               <CardContent className="p-0 whitespace-pre-wrap">
-                {m.content}
+                {message.content}
               </CardContent>
             </Card>
           </div>
