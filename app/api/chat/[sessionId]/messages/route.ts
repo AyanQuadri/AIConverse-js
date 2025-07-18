@@ -13,7 +13,7 @@ const bodySchema = z.object({
 // GET: Fetch all messages for a session
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ sessionId: string }> } 
+    { params }: { params: Promise<{ sessionId: string }> }
 ) {
     const { sessionId } = await params;
 
@@ -36,9 +36,9 @@ export async function GET(
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { sessionId: string } }
+    { params }: { params: Promise<{ sessionId: string }> }
 ) {
-    const { sessionId } = params;
+    const { sessionId } = await params;
 
     try {
         const { message } = bodySchema.parse(await req.json());

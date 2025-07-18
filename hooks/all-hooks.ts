@@ -92,8 +92,5 @@ export function useChatMessages(sessionId: string) {
                 .json<Message[]>();
             return res;
         }
-
-
-
     });
 }

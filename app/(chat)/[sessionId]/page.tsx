@@ -1,24 +1,31 @@
 "use client";
+import { useState, useRef, useEffect } from "react";
+import type React from "react";
 
-import { useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { ChatMessages, ChatMessagesRef } from "@/components/chat-message";
+import { ChatMessages, type ChatMessagesRef } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Message } from "@/components/chat-message";
+import type { Message } from "@/components/chat-message";
 
 export default function ChatPage() {
   const [input, setInput] = useState("");
   const chatRef = useRef<ChatMessagesRef>(null);
   const { sessionId } = useParams() as { sessionId: string };
   const queryClient = useQueryClient();
-  const {
-    data: messages = [],
-    isLoading,
-    isError,
-  } = useQuery({
+
+  // Add useEffect to invalidate and refetch when sessionId changes
+  useEffect(() => {
+    if (sessionId) {
+      // Invalidate and refetch messages for the new session when sessionId changes.
+      // This ensures that when navigating to a different session, its history is fetched fresh.
+      queryClient.invalidateQueries({ queryKey: ["chatMessages", sessionId] });
+    }
+  }, [sessionId, queryClient]); // Depend on sessionId and queryClient
+
+  const { data: messages = [] } = useQuery({
     queryKey: ["chatMessages", sessionId],
     queryFn: async () => {
       const res = await api
@@ -27,6 +34,7 @@ export default function ChatPage() {
       return res.messages;
     },
     enabled: !!sessionId,
+    refetchInterval:3000,
   });
 
   const { mutate: sendMessage, isPending } = useMutation({
@@ -41,16 +49,12 @@ export default function ChatPage() {
         .post(`chat/${sessionId}/messages`, {
           json: { message: content },
         })
-        .json<{ response: string }>();
-
-      return {
-        id: crypto.randomUUID(),
-        role: "assistant" as const,
-        content: res.response,
-        createdAt: new Date().toISOString(),
-      };
+        .json<{
+          userMessage: Message;
+          assistantMessage: Message;
+        }>();
+      return res;
     },
-
     onMutate: async ({ content }) => {
       await queryClient.cancelQueries({
         queryKey: ["chatMessages", sessionId],
@@ -62,7 +66,7 @@ export default function ChatPage() {
       ]);
 
       const optimisticMessage: Message = {
-        id: crypto.randomUUID(),
+        id: crypto.randomUUID(), // Unique ID for optimistic message
         role: "user",
         content,
         createdAt: new Date().toISOString(),
@@ -75,22 +79,24 @@ export default function ChatPage() {
 
       chatRef.current?.scrollToBottom();
 
-      return { previousMessages };
+      // Return a context object with the optimistic message ID
+      return { previousMessages, optimisticMessageId: optimisticMessage.id };
     },
-
-    onSuccess: (responseMessage) => {
+    onSuccess: ({ userMessage, assistantMessage }, _variables, context) => {
       queryClient.setQueryData<Message[]>(
         ["chatMessages", sessionId],
-        (old: any = []) => [...old, responseMessage]
+        (old = []) => {
+          // Find the optimistic message by its ID and replace it with the actual userMessage
+          const updatedMessages = old.map((msg) =>
+            msg.id === context?.optimisticMessageId ? userMessage : msg
+          );
+          // Append the assistantMessage
+          return [...updatedMessages, assistantMessage];
+        }
       );
-
       setInput("");
       chatRef.current?.scrollToBottom();
-
-      queryClient.invalidateQueries({ queryKey: ["chatMessages", sessionId] });
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
-
     onError: (_err, _newMessage, context) => {
       if (context?.previousMessages) {
         queryClient.setQueryData(
@@ -98,6 +104,11 @@ export default function ChatPage() {
           context.previousMessages
         );
       }
+    },
+    onSettled: () => {
+      // Invalidate to ensure data consistency, but the UI should already be updated by onSuccess
+      queryClient.invalidateQueries({ queryKey: ["chatMessages", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
   });
 
@@ -107,7 +118,6 @@ export default function ChatPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setInput(e.target.value);
-    chatRef.current?.scrollToBottom();
   };
 
   const handleSend = (prompt: string) => {
@@ -130,12 +140,11 @@ export default function ChatPage() {
               ref={chatRef}
               chatId={sessionId}
               isThinking={isPending}
-              messages={messages} // ✅ add this line
+              messages={messages}
             />
           </div>
         </div>
       )}
-
       <div
         className={cn("w-full", hasMessages ? "bg-background px-4 py-6" : "")}
       >
