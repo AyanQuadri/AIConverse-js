@@ -13,7 +13,8 @@ import { ArrowUp, Paperclip, ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRef, useEffect, useTransition } from "react";
+import { useRef, useEffect, useTransition, useMemo } from "react";
+import { allPrompts } from "@/lib/prompts";
 
 const formSchema = z.object({
   prompt: z.string().min(1, "Message cannot be empty"),
@@ -27,14 +28,6 @@ interface ChatInputProps {
 }
 
 // Sample prompts for the user
-const samplePrompts = [
-  "Explain quantum computing in simple terms",
-  "Give me ideas for a healthy dinner",
-  "Write a short story about a robot discovering emotions",
-  "Summarize the latest news in AI",
-  "What are the benefits of cloud computing?",
-  "How does photosynthesis work?",
-];
 
 export function ChatInput({ onSend, isThinking }: ChatInputProps) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -47,7 +40,10 @@ export function ChatInput({ onSend, isThinking }: ChatInputProps) {
       prompt: "",
     },
   });
-
+  const samplePrompts = useMemo(() => {
+    const shuffled = [...allPrompts].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 3);
+  }, []);
   // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
@@ -86,17 +82,17 @@ export function ChatInput({ onSend, isThinking }: ChatInputProps) {
       <div className="max-w-3xl mx-auto">
         {/* Prompt Suggestions */}
         {samplePrompts.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground mb-2">
-              Try these prompts:
-            </p>
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-muted-foreground mb-3">
+              Quick Suggestions
+            </h2>
             <div className="flex flex-wrap gap-2">
               {samplePrompts.map((prompt, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   size="sm"
-                  className="rounded-full text-xs px-3 py-1 leading-5 bg-background hover:bg-accent transition-colors"
+                  className="rounded-full text-xs px-4 py-1.5 leading-5 bg-background hover:bg-muted transition-colors border-muted-foreground/20"
                   onClick={() => handlePromptClick(prompt)}
                   disabled={isDisabled}
                 >
