@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash, Pencil, MoreVertical, MessageSquarePlus } from "lucide-react"; // Added MessageSquarePlus
+import { Trash, Pencil, MoreVertical, EditIcon } from "lucide-react"; // Added MessageSquarePlus
 import { useState, useTransition } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -95,16 +96,27 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <SidebarHeader className="p-4 border-b border-gray-200 dark:border-gray-800 space-y-3">
+        {/* Home Link / Brand */}
+        <Link
+          href="/"
+          className="block text-lg font-semibold tracking-tight text-primary hover:opacity-80 transition-opacity"
+        >
+          AI
+        </Link>
+
+        {/* New Chat Button */}
         <Button
-          className="w-full text-sm font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
           onClick={() => createSession()}
           disabled={isPending}
+          variant="ghost"
+          className="w-full justify-start gap-3 text-sm font-normal hover:bg-accent transition-colors px-3 py-2"
         >
-          <MessageSquarePlus className="h-4 w-4" />
+          <EditIcon className="h-4 w-4 shrink-0" />
           {isPending ? "Creating..." : "New Chat"}
         </Button>
       </SidebarHeader>
+
       <SidebarContent className="py-4">
         <SidebarGroup>
           <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
