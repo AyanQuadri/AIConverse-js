@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Form,
   FormField,
@@ -10,7 +9,7 @@ import {
 import type React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Paperclip, ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,23 +22,24 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface ChatInputProps {
-  input: string;
-  setInput: (value: string) => void;
-  handleInputChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
   onSend: (prompt: string) => void;
+  isThinking: boolean; // Prop to indicate if AI is processing a response
 }
 
-export function ChatInput({
-  input,
-  setInput,
-  handleInputChange,
-  onSend,
-}: ChatInputProps) {
+// Sample prompts for the user
+const samplePrompts = [
+  "Explain quantum computing in simple terms",
+  "Give me ideas for a healthy dinner",
+  "Write a short story about a robot discovering emotions",
+  "Summarize the latest news in AI",
+  "What are the benefits of cloud computing?",
+  "How does photosynthesis work?",
+];
+
+export function ChatInput({ onSend, isThinking }: ChatInputProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, startTransition] = useTransition();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,73 +48,107 @@ export function ChatInput({
     },
   });
 
+  // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      const height = Math.min(textareaRef.current.scrollHeight, 200);
+      const height = Math.min(textareaRef.current.scrollHeight, 200); // Max height 200px
       textareaRef.current.style.height = `${height}px`;
     }
-  }, [form.watch("prompt")]);
+  }, [form.watch("prompt")]); // Watch the prompt field for changes
 
   const onSubmit = (data: FormValues) => {
     const prompt = data.prompt.trim();
     if (!prompt) return;
 
-    form.reset();
-    setInput("");
+    form.reset(); // Reset the form field after submission
     startTransition(() => {
       onSend(prompt);
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Prevent new line on Enter
+      formRef.current?.requestSubmit(); // Submit the form
+    }
+  };
+
+  const handlePromptClick = (promptText: string) => {
+    form.setValue("prompt", promptText, { shouldValidate: true }); // Set value and trigger validation
+    textareaRef.current?.focus(); // Focus the textarea after setting the prompt
+  };
+
+  const isDisabled = isThinking || isSubmitting;
+
   return (
-    <div className="w-full p-4">
-      <Form {...form}>
-        <form
-          ref={formRef}
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full max-w-4xl mx-auto"
-        >
-          <div className="relative">
+    <div className="w-full px-4 pb-6">
+      <div className="max-w-3xl mx-auto">
+        {/* Prompt Suggestions */}
+        {samplePrompts.length > 0 && (
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground mb-2">
+              Try these prompts:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {samplePrompts.map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full text-xs px-3 py-1 leading-5 bg-background hover:bg-accent transition-colors"
+                  onClick={() => handlePromptClick(prompt)}
+                  disabled={isDisabled}
+                >
+                  {prompt}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Form {...form}>
+          <form
+            ref={formRef}
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full relative bg-background rounded-lg border border-accent transition-colors shadow-sm"
+          >
             <FormField
               control={form.control}
               name="prompt"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      ref={textareaRef}
-                      placeholder="Send a message..."
-                      className="w-full min-h-[120px] max-h-[200px] resize-none py-4 pl-4 pr-12 rounded-xl border shadow-sm"
-                      rows={1}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          formRef.current?.requestSubmit();
-                        }
-                      }}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        handleInputChange(e);
-                      }}
-                    />
+                    <div className="relative">
+                      <Textarea
+                        {...field}
+                        ref={textareaRef}
+                        placeholder="Type your message here..."
+                        rows={1}
+                        onKeyDown={handleKeyDown}
+                        disabled={isDisabled}
+                        className="w-full min-h-[100px] max-h-[200px] resize-none py-4 pl-4 pr-12  shadow-none bg-transparent"
+                      />
+                      <div className="absolute right-3 bottom-3">
+                        <Button
+                          type="submit"
+                          size="icon"
+                          variant={field.value.trim() ? "default" : "secondary"}
+                          disabled={isDisabled || !field.value.trim()}
+                          className="h-8 w-8 rounded-full transition-colors cursor-pointer"
+                          aria-label="Send message"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={isPending || !form.watch("prompt").trim()}
-              className="absolute right-2 bottom-2 h-9 w-9 rounded-lg"
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }

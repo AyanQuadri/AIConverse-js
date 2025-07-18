@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +10,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
 import {
   Dialog,
   DialogContent,
@@ -19,14 +17,12 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash, Pencil, MoreVertical } from "lucide-react";
+import { Trash, Pencil, MoreVertical, MessageSquarePlus } from "lucide-react"; // Added MessageSquarePlus
 import { useState, useTransition } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -36,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton"; // Added Skeleton
 
 type Session = {
   id: string;
@@ -98,30 +95,32 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 border-b border-gray-200 dark:border-gray-800">
         <Button
-          className="w-full text-xs"
+          className="w-full text-sm font-semibold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
           onClick={() => createSession()}
           disabled={isPending}
         >
-          {isPending ? "Creating..." : "+ New Chat"}
+          <MessageSquarePlus className="h-4 w-4" />
+          {isPending ? "Creating..." : "New Chat"}
         </Button>
       </SidebarHeader>
-
-      <SidebarContent>
+      <SidebarContent className="py-4">
         <SidebarGroup>
-          <SidebarGroupLabel>Chat History</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Chat History
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {isLoading ? (
-                <SidebarMenuItem>
-                  <span className="text-xs text-muted-foreground">
-                    Loading...
-                  </span>
-                </SidebarMenuItem>
+                <div className="px-4 space-y-2">
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-8 w-3/4" />
+                </div>
               ) : sessions.length === 0 ? (
-                <SidebarMenuItem>
-                  <span className="text-xs text-muted-foreground">
+                <SidebarMenuItem className="px-4 py-2">
+                  <span className="text-sm text-muted-foreground">
                     No sessions yet
                   </span>
                 </SidebarMenuItem>
@@ -129,44 +128,44 @@ export function AppSidebar() {
                 sessions.map((session) => (
                   <SidebarMenuItem
                     key={session.id}
-                    className="flex items-start gap-2 flex-col w-full"
+                    className="flex items-center justify-between gap-2 px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
                   >
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <Link
-                        href={`/${session.id}`}
-                        className="text-sm hover:underline flex-1 truncate"
-                      >
-                        {session.title || "Untitled"}
-                      </Link>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-6 h-6 p-0"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent side="right">
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setEditingSession(session);
-                              setNewTitle(session.title || "");
-                            }}
-                          >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => deleteSession(session.id)}
-                          >
-                            <Trash className="mr-2 h-4 w-4 text-red-500" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <Link
+                      href={`/${session.id}`}
+                      className="text-sm flex-1 truncate py-1" // Added py-1 for better click area
+                    >
+                      {session.title || "Untitled Chat"}
+                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-6 h-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200" // Only show on hover
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="right" align="start">
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            setEditingSession(session);
+                            setNewTitle(session.title || "");
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => deleteSession(session.id)}
+                          className="text-red-500 focus:text-red-600 cursor-pointer"
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </SidebarMenuItem>
                 ))
               )}
@@ -174,11 +173,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="p-4 border-t text-xs text-muted-foreground">
-        Ayan AI Chat Bot
+      <SidebarFooter className="p-4 border-t border-gray-200 dark:border-gray-800 text-sm text-muted-foreground text-center">
+        AIConverse
       </SidebarFooter>
-
       {/* Rename Dialog */}
       <Dialog
         open={!!editingSession}

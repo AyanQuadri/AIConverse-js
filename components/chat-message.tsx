@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useEffect,
-} from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
@@ -59,10 +54,10 @@ export const ChatMessages = forwardRef<ChatMessagesRef, ChatMessagesProps>(
             )}
             <Card
               className={cn(
-                "max-w-[70%] rounded-xl",
+                "max-w-[85%] rounded-xl",
                 message.role === "user"
                   ? "bg-[#171717] text-foreground border px-3 py-2 text-sm"
-                  : "bg-muted/50 text-muted-foreground border px-4 py-3"
+                  : "bg-[oklch(0.556 0 0)] text-white border px-10 py-3"
               )}
             >
               <CardContent className="p-0 whitespace-pre-wrap">

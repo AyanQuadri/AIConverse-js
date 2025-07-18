@@ -41,7 +41,7 @@ export default async function RootLayout({
               <main className="flex flex-col w-full">
                 <div className="flex items-center p-4 border-b">
                   <SidebarTrigger className="mr-4" />
-                  <h1 className="text-xl font-semibold">Gemini Chatbot</h1>
+                  <h1 className="text-xl font-semibold">AIConverse</h1>
                 </div>
                 {children}
               </main>
